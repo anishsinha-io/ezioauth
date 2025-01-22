@@ -7,7 +7,7 @@ This is a utility program that you can use to get an access token using the auth
   "auth_url": "http://localhost:8080/realms/your_realm/protocol/openid-connect/auth",
   "token_url": "http://localhost:8080/realms/your_realm/protocol/openid-connect/token",
   "client_id": "your_realm",
-  "client_secret": "ZBnqHytTrKDfzBoUSqpKQHODbc2psXsM",
+  "client_secret": "your_secret",
   "redirect_uri": "http://localhost:8666/callback",
   "scope": "openid profile email"
 }
