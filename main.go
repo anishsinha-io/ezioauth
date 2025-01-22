@@ -14,7 +14,12 @@ func main() {
 	overrideConfigFromFlags(&config)
 
 	if cachedData, err := loadCachedTokenData(); err == nil && !*skipCache {
-		fmt.Println(cachedData.AccessToken)
+		refreshed, err := refreshToken(config, cachedData.RefreshToken)
+		if err != nil {
+			log.Fatalf("Failed to refresh token: %v", err)
+		}
+		cacheTokenData(refreshed)
+		fmt.Println(refreshed.AccessToken)
 		return
 	}
 
