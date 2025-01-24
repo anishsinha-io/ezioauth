@@ -1,4 +1,4 @@
 tmp/
 bin/
-server.json
+config.json
 credentials.json

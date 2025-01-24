@@ -1,0 +1,12 @@
+{
+  "server": {
+    "auth_url": "http://localhost:8080/realms/your_client/protocol/openid-connect/auth",
+    "token_url": "http://localhost:8080/realms/your_client/protocol/openid-connect/token",
+    "client_id": "your_client",
+    "client_secret": "your_client_secret",
+    "redirect_uri": "http://localhost:8666/callback",
+    "scope": "openid profile email"
+  },
+  "credentials_cache": "credentials.json",
+  "skip_cache": false
+}

@@ -3,24 +3,24 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 )
 
 var (
-	// serverConfigFile is the path to the server config file. An example is provided at `example-server.json`
-	serverConfigFile = flag.String("server-config", "", "Path to the server config file")
+	// configFile is the path to the configuration file.
+	configFile = flag.String("config", "", "Path to the config file")
 
 	// authURL, tokenURL, clientID, clientSecret, redirectURI, and scope are the OpenID Connect configuration parameters.
-	authURL      = flag.String("auth-url", "", "OpenID authentication URL")
-	tokenURL     = flag.String("token-url", "", "OpenID token URL")
-	clientID     = flag.String("client-id", "", "OpenID client ID")
-	clientSecret = flag.String("client-secret", "", "OpenID client secret")
-	redirectURI  = flag.String("redirect-uri", "", "OpenID redirect URI")
-	scope        = flag.String("scope", "", "OpenID scopes")
-
-	// skipCache is a flag that determines whether to skip loading cached credentials.
-	skipCache = flag.Bool("skip-cache", false, "Skip loading cached credentials")
+	authURL          = flag.String("auth-url", "", "OpenID authentication URL")
+	tokenURL         = flag.String("token-url", "", "OpenID token URL")
+	clientID         = flag.String("client-id", "", "OpenID client ID")
+	clientSecret     = flag.String("client-secret", "", "OpenID client secret")
+	redirectURI      = flag.String("redirect-uri", "", "OpenID redirect URI")
+	scope            = flag.String("scope", "", "OpenID scopes")
+	credentialsCache = flag.String("credentials-cache", "", "Path to where the app should cache the credentials")
+	skipCache        = flag.Bool("skip-cache", false, "Skip the cache and force a new token exchange")
 )
 
 // serverConfig represents the OpenID Connect configuration parameters.
@@ -33,17 +33,25 @@ type serverConfig struct {
 	Scope        string `json:"scope"`
 }
 
+// appConfig represents the application configuration.
+type appConfig struct {
+	Server           serverConfig `json:"server"`
+	CredentialsCache string       `json:"credentials_cache"`
+	SkipCache        bool         `json:"skip_cache"`
+}
+
 // tokenData represents the returned data as a result of a successful OAuth 2.0 authorization code flow
 type tokenData struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
-// loadConfig loads the server configuration from the server config file.
-func loadConfig() serverConfig {
-	c := serverConfig{}
-	if *serverConfigFile != "" {
-		file, err := os.Open(*serverConfigFile)
+// loadAppConfig loads the application configuration from the configuration file.
+func loadAppConfig() appConfig {
+	fmt.Println(*configFile)
+	c := appConfig{}
+	if *configFile != "" {
+		file, err := os.Open(*configFile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -56,29 +64,30 @@ func loadConfig() serverConfig {
 	return c
 }
 
-// overrideConfigFromFlags overrides the server configuration parameters with the flags provided.
-func overrideConfigFromFlags(config *serverConfig) {
+// overrideConfigFromFlags overrides the configuration parameters from the command line flags.
+func overrideConfigFromFlags(c *appConfig) {
 	if *authURL != "" {
-		config.AuthURL = *authURL
+		c.Server.AuthURL = *authURL
 	}
-
 	if *tokenURL != "" {
-		config.TokenURL = *tokenURL
+		c.Server.TokenURL = *tokenURL
 	}
-
 	if *clientID != "" {
-		config.ClientID = *clientID
+		c.Server.ClientID = *clientID
 	}
-
 	if *clientSecret != "" {
-		config.ClientSecret = *clientSecret
+		c.Server.ClientSecret = *clientSecret
 	}
-
 	if *redirectURI != "" {
-		config.RedirectURI = *redirectURI
+		c.Server.RedirectURI = *redirectURI
 	}
-
 	if *scope != "" {
-		config.Scope = *scope
+		c.Server.Scope = *scope
+	}
+	if *credentialsCache != "" {
+		c.CredentialsCache = *credentialsCache
+	}
+	if *skipCache {
+		c.SkipCache = *skipCache
 	}
 }

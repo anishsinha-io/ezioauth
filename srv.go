@@ -33,17 +33,17 @@ func startCallbackServer(codeChan chan<- string, expectedState string) {
 }
 
 // exchangeCodeForToken exchanges the authorization code for an access token.
-func exchangeCodeForToken(config serverConfig, authCode string) (tokenData, error) {
+func exchangeCodeForToken(authCode string) (tokenData, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", authCode)
-	data.Set("redirect_uri", config.RedirectURI)
-	data.Set("client_id", config.ClientID)
-	data.Set("client_secret", config.ClientSecret)
+	data.Set("redirect_uri", config.Server.RedirectURI)
+	data.Set("client_id", config.Server.ClientID)
+	data.Set("client_secret", config.Server.ClientSecret)
 
-	req, err := http.NewRequest("POST", config.TokenURL, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", config.Server.TokenURL, strings.NewReader(data.Encode()))
 	if err != nil {
 		return tokenData{}, err
 	}
@@ -70,16 +70,16 @@ func exchangeCodeForToken(config serverConfig, authCode string) (tokenData, erro
 }
 
 // refreshToken refreshes the access token using the given refresh token
-func refreshToken(config serverConfig, refreshToken string) (tokenData, error) {
+func refreshToken(refreshToken string) (tokenData, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	data := url.Values{}
 	data.Set("grant_type", "refresh_token")
 	data.Set("refresh_token", refreshToken)
-	data.Set("client_id", config.ClientID)
-	data.Set("client_secret", config.ClientSecret)
+	data.Set("client_id", config.Server.ClientID)
+	data.Set("client_secret", config.Server.ClientSecret)
 
-	req, err := http.NewRequest("POST", config.TokenURL, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", config.Server.TokenURL, strings.NewReader(data.Encode()))
 	if err != nil {
 		return tokenData{}, err
 	}
@@ -89,6 +89,10 @@ func refreshToken(config serverConfig, refreshToken string) (tokenData, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		return tokenData{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return tokenData{}, fmt.Errorf("token refresh failed: %s", resp.Status)
 	}
 
 	var respData tokenData

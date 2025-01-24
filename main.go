@@ -4,32 +4,41 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 
 	"flag"
 )
 
+var (
+	// config is the application configuration
+	config appConfig
+)
+
 func main() {
 	flag.Parse()
-	config := loadConfig()
+
+	config = loadAppConfig()
 	overrideConfigFromFlags(&config)
 
-	if cachedData, err := loadCachedTokenData(); err == nil && !*skipCache {
-		refreshed, err := refreshToken(config, cachedData.RefreshToken)
+	if cachedData, err := loadCachedTokenData(); err == nil && !config.SkipCache {
+		refreshed, err := refreshToken(cachedData.RefreshToken)
 		if err != nil {
-			log.Fatalf("Failed to refresh token: %v", err)
+			fmt.Printf("Failed to refresh token: %v\n", err)
+			os.Remove("credentials.json")
+		} else {
+			cacheTokenData(refreshed)
+			fmt.Println(refreshed.AccessToken)
+			return
 		}
-		cacheTokenData(refreshed)
-		fmt.Println(refreshed.AccessToken)
-		return
 	}
 
 	state := createStateParam(16)
 
 	authReqURL := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s",
-		config.AuthURL,
-		url.QueryEscape(config.ClientID),
-		url.QueryEscape(config.RedirectURI),
-		url.QueryEscape(config.Scope),
+		config.Server.AuthURL,
+		url.QueryEscape(config.Server.ClientID),
+		url.QueryEscape(config.Server.RedirectURI),
+		url.QueryEscape(config.Server.Scope),
 		url.QueryEscape(state),
 	)
 
@@ -40,7 +49,7 @@ func main() {
 
 	authCode := <-codeChan
 
-	data, err := exchangeCodeForToken(config, authCode)
+	data, err := exchangeCodeForToken(authCode)
 	if err != nil {
 		log.Fatalf("Failed to exchange code for token: %v", err)
 	}
