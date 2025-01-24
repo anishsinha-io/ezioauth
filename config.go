@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
-	"log"
 	"os"
 )
 
@@ -48,16 +46,17 @@ type tokenData struct {
 
 // loadAppConfig loads the application configuration from the configuration file.
 func loadAppConfig() appConfig {
-	fmt.Println(*configFile)
 	c := appConfig{}
 	if *configFile != "" {
 		file, err := os.Open(*configFile)
 		if err != nil {
-			log.Fatal(err)
+			eLog.Println(err)
+			os.Exit(1)
 		}
 		defer file.Close()
 		if err := json.NewDecoder(file).Decode(&c); err != nil {
-			log.Fatal(err)
+			eLog.Println(err)
+			os.Exit(1)
 		}
 	}
 
