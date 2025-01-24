@@ -17,7 +17,9 @@ This is a utility program that you can use to get an access token using the auth
 }
 ```
 
-Your auth provider of choice should expose all these parameters in an OpenID configuration document. To run the program, you need `Go`. Once you have it, you can run the command:
+Your auth provider of choice should expose all these parameters in an OpenID configuration document. Also, please ensure that you make `http://localhost:8666/callback` a valid `redirect_uri`. This could be changed to be a bit more flexible but as of right now it doesn't seem worth it.
+
+To run the program, you need `Go`. Once you have it, you can run the command:
 
 - `go build -ldflags "-w" -o ./bin/oauth-cli`
 
