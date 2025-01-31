@@ -1,40 +1,30 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 
-	"flag"
-	"github.com/fatih/color"
 	"golang.design/x/clipboard"
 )
 
-var (
-	// config is the application configuration
-	config appConfig
-
-	mLog = color.RGB(119, 221, 119).Add(color.Bold)
-	wLog = color.RGB(233, 236, 107).Add(color.Bold)
-	eLog = color.RGB(244, 54, 76).Add(color.Bold)
-)
-
 func main() {
-	flag.Parse()
-
-	config = loadAppConfig()
-	overrideConfigFromFlags(&config)
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		log.Fatal(err)
+	}
 
 	if cachedData, err := loadCachedTokenData(); err == nil && !config.SkipCache {
 		refreshed, err := refreshToken(cachedData.RefreshToken)
 		if err != nil {
-			wLog.Printf("Failed to refresh token (%v). Clearing cache...\n", err)
-			os.Remove("credentials.json")
+			fmt.Printf("Failed to refresh token (%v). Clearing cache...\n", err)
+			os.Remove(config.CredentialsCache)
 		} else {
 			cacheTokenData(refreshed)
 
 			clipboard.Write(clipboard.FmtText, []byte(refreshed.AccessToken))
-			mLog.Println("Token copied to clipboard")
+			fmt.Println("Token copied to clipboard")
 			return
 		}
 	}
@@ -49,7 +39,7 @@ func main() {
 		url.QueryEscape(state),
 	)
 
-	mLog.Println("Please open the following URL in your browser to continue:\n" + authReqURL)
+	fmt.Println("Please open the following URL in your browser to continue [cmd+click]:\n" + authReqURL)
 
 	codeChan := make(chan string)
 	go startCallbackServer(codeChan, state)
@@ -58,15 +48,13 @@ func main() {
 
 	data, err := exchangeCodeForToken(authCode)
 	if err != nil {
-		eLog.Printf("Failed to exchange code for token: %v", err)
-		os.Exit(1)
+		log.Fatalf("Failed to exchange code for token: %v", err)
 	}
 
 	if err := cacheTokenData(data); err != nil {
-		eLog.Printf("Failed to cache credentials: %v", err)
-		os.Exit(1)
+		log.Fatalf("Failed to cache credentials: %v", err)
 	}
 
 	clipboard.Write(clipboard.FmtText, []byte(data.AccessToken))
-	mLog.Println("Token copied to clipboard")
+	fmt.Println("Token copied to clipboard")
 }

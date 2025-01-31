@@ -29,7 +29,7 @@ func startCallbackServer(codeChan chan<- string, expectedState string) {
 		codeChan <- code
 	})
 
-	log.Fatal(http.ListenAndServe(":8666", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", config.CallbackServerPort), nil))
 }
 
 // exchangeCodeForToken exchanges the authorization code for an access token.
