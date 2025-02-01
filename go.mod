@@ -1,4 +1,4 @@
-module github.com/anishsinha-io/oauth-cli
+module github.com/anishsinha-io/ezioauth
 
 go 1.23.0
 

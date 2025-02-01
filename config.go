@@ -35,8 +35,20 @@ func (s *serverConfig) validate() error {
 type appConfig struct {
 	Server             serverConfig `json:"server"`
 	CredentialsCache   string       `json:"credentials_cache"`
-	SkipCache          bool         `json:"skip_cache"`
 	CallbackServerPort string       `json:"callback_server_port"`
+}
+
+func (a *appConfig) save(path string) error {
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(a, "", "  ")
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(data)
+	return err
 }
 
 // validate validates the application configuration.
@@ -74,7 +86,7 @@ type tokenData struct {
 
 // initXDGConfig initializes the configuration file in the XDG configuration directory.
 func initXDGConfig() (string, error) {
-	configFilePath, err := xdg.ConfigFile("oauth-cli/config.json")
+	configFilePath, err := xdg.ConfigFile("ezioauth/config.json")
 	if err != nil {
 		return "", err
 	}
@@ -95,7 +107,9 @@ func initXDGConfig() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		file.Seek(0, 0)
+		if _, err := file.Seek(0, 0); err != nil {
+			return "", err
+		}
 	}
 	return configFilePath, nil
 }
